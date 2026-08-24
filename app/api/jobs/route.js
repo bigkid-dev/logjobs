@@ -16,6 +16,68 @@ import { getDbJobs, createJob, getJobsByHirerId } from "../../../lib/db.js";
 import { getSessionUser } from "../../../lib/auth.js";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 45;
+
+// In-memory scraper cache to make responses instantaneous on Vercel
+let cachedScrapedJobs = null;
+let lastScrapeTime = 0;
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+async function fetchExternalScrapedJobs() {
+  const now = Date.now();
+  if (cachedScrapedJobs && (now - lastScrapeTime) < CACHE_TTL_MS) {
+    console.log(`[API /api/jobs] Serving ${cachedScrapedJobs.length} external jobs from in-memory cache`);
+    return cachedScrapedJobs;
+  }
+
+  let scrapedJobs = [];
+  try {
+    const [remoteok, remotive, arbeitnow, himalayas, wwr, nigerianJobs, smartyacad] = await Promise.allSettled([
+      scrapeRemoteOK(),
+      scrapeRemotive(),
+      scrapeArbeitnow(),
+      scrapeHimalayas(),
+      scrapeWeWorkRemotely(),
+      scrapeNigerianJobs(),
+      scrapeSmartyAcad()
+    ]);
+
+    const rOkCount = remoteok.status === "fulfilled" ? remoteok.value.length : 0;
+    const remotiveCount = remotive.status === "fulfilled" ? remotive.value.length : 0;
+    const arbeitnowCount = arbeitnow.status === "fulfilled" ? arbeitnow.value.length : 0;
+    const himalayasCount = himalayas.status === "fulfilled" ? himalayas.value.length : 0;
+    const wwrCount = wwr.status === "fulfilled" ? wwr.value.length : 0;
+    const ngCount = nigerianJobs.status === "fulfilled" ? nigerianJobs.value.length : 0;
+    const smartyCount = smartyacad.status === "fulfilled" ? smartyacad.value.length : 0;
+
+    console.log(`[API /api/jobs] Scraper fresh results: RemoteOK (${rOkCount}), Remotive (${remotiveCount}), Arbeitnow (${arbeitnowCount}), Himalayas (${himalayasCount}), WWR (${wwrCount}), NigerianJobs (${ngCount}), SmartyAcad (${smartyCount})`);
+
+    scrapedJobs = [
+      ...(remoteok.status === "fulfilled" ? remoteok.value : []),
+      ...(remotive.status === "fulfilled" ? remotive.value : []),
+      ...(arbeitnow.status === "fulfilled" ? arbeitnow.value : []),
+      ...(himalayas.status === "fulfilled" ? himalayas.value : []),
+      ...(wwr.status === "fulfilled" ? wwr.value : []),
+      ...(nigerianJobs.status === "fulfilled" ? nigerianJobs.value : []),
+      ...(smartyacad.status === "fulfilled" ? smartyacad.value : [])
+    ];
+  } catch (scrapeErr) {
+    console.warn("[API /api/jobs] External scraping warning:", scrapeErr.message);
+  }
+
+  const normalized = scrapedJobs.map((job) => ({
+    ...job,
+    stacks: [...new Set([...(job.stacks || []), ...extractStacks(job.title)])],
+    region: job.region || detectRegion(job.location)
+  }));
+
+  if (normalized.length > 0) {
+    cachedScrapedJobs = normalized;
+    lastScrapeTime = now;
+  }
+
+  return cachedScrapedJobs || normalized;
+}
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -34,11 +96,9 @@ export async function GET(request) {
     if (category === 'my-jobs') {
       const user = await getSessionUser();
       if (!user) {
-        console.log('[API /api/jobs] Unauthorized my-jobs request');
         return Response.json({ error: "Authentication required" }, { status: 401 });
       }
       const myJobs = await getJobsByHirerId(user.id);
-      console.log(`[API /api/jobs] my-jobs returned ${myJobs.length} jobs for user ${user.id}`);
       return Response.json({
         jobs: myJobs,
         total: myJobs.length,
@@ -47,61 +107,22 @@ export async function GET(request) {
       });
     }
 
-    // 1. Fetch DB jobs first (priority user-posted & seeded direct jobs)
-    const dbJobs = await getDbJobs({ category });
-    console.log(`[API /api/jobs] Loaded ${dbJobs.length} DB jobs for category "${category}"`);
-
-    // 2. Fetch from external scrapers in parallel with graceful error handling
-    let scrapedJobs = [];
+    // 1. Fetch DB jobs safely
+    let dbJobs = [];
     try {
-      const [remoteok, remotive, arbeitnow, himalayas, wwr, nigerianJobs, smartyacad] = await Promise.allSettled([
-        scrapeRemoteOK(),
-        scrapeRemotive(),
-        scrapeArbeitnow(),
-        scrapeHimalayas(),
-        scrapeWeWorkRemotely(),
-        scrapeNigerianJobs(),
-        scrapeSmartyAcad()
-      ]);
-
-      const rOkCount = remoteok.status === "fulfilled" ? remoteok.value.length : 0;
-      const remotiveCount = remotive.status === "fulfilled" ? remotive.value.length : 0;
-      const arbeitnowCount = arbeitnow.status === "fulfilled" ? arbeitnow.value.length : 0;
-      const himalayasCount = himalayas.status === "fulfilled" ? himalayas.value.length : 0;
-      const wwrCount = wwr.status === "fulfilled" ? wwr.value.length : 0;
-      const ngCount = nigerianJobs.status === "fulfilled" ? nigerianJobs.value.length : 0;
-      const smartyCount = smartyacad.status === "fulfilled" ? smartyacad.value.length : 0;
-
-      console.log(`[API /api/jobs] Scraper results: RemoteOK (${rOkCount}), Remotive (${remotiveCount}), Arbeitnow (${arbeitnowCount}), Himalayas (${himalayasCount}), WWR (${wwrCount}), NigerianJobs (${ngCount}), SmartyAcad (${smartyCount})`);
-
-      scrapedJobs = [
-        ...(remoteok.status === "fulfilled" ? remoteok.value : []),
-        ...(remotive.status === "fulfilled" ? remotive.value : []),
-        ...(arbeitnow.status === "fulfilled" ? arbeitnow.value : []),
-        ...(himalayas.status === "fulfilled" ? himalayas.value : []),
-        ...(wwr.status === "fulfilled" ? wwr.value : []),
-        ...(nigerianJobs.status === "fulfilled" ? nigerianJobs.value : []),
-        ...(smartyacad.status === "fulfilled" ? smartyacad.value : [])
-      ];
-    } catch (scrapeErr) {
-      console.warn("[API /api/jobs] External scraping warning:", scrapeErr.message);
+      dbJobs = await getDbJobs({ category });
+    } catch (dbErr) {
+      console.warn("[API /api/jobs] DB read warning:", dbErr.message);
     }
 
-    // 3. Normalize external scraped jobs
-    let normalizedScraped = scrapedJobs.map((job) => ({
-      ...job,
-      stacks: [...new Set([...(job.stacks || []), ...extractStacks(job.title)])],
-      region: job.region || detectRegion(job.location)
-    }));
+    // 2. Fetch external scraped jobs (cached)
+    const normalizedScraped = await fetchExternalScrapedJobs();
 
-    // 4. Combine real DB jobs first (priority user-posted direct jobs) with external scraped jobs
+    // 3. Combine real DB jobs first with external scraped jobs
     let allJobs = [...dbJobs, ...normalizedScraped];
 
     // Filter by active feed category tab
     if (category === 'nigerian') {
-      // 1. Direct Nigerian jobs (Lagos, Abuja, Ibadan, Port Harcourt, Nigeria)
-      // 2. Global Remote & Worldwide jobs (open to talent in Nigeria)
-      // Filters out pure on-site international roles locked to specific foreign cities (e.g. on-site in Munich, Berlin, London)
       allJobs = allJobs.filter(job => {
         const loc = (job.location || '').toLowerCase();
         const reg = (job.region || '').toLowerCase();
@@ -119,19 +140,15 @@ export async function GET(request) {
         return 0;
       });
     } else if (category === 'global') {
-      // Global remote opportunities
       allJobs = allJobs.filter(job => job.region !== 'Nigeria');
     }
 
     // Deduplicate
     allJobs = deduplicateJobs(allJobs);
-    console.log(`[API /api/jobs] Total combined & deduplicated pool for category "${category}": ${allJobs.length} jobs`);
 
     // ── Apply Query Filters ───────────────────────────────────
-
     if (stacks.length) {
       allJobs = allJobs.filter((job) => matchesStack(job, stacks));
-      console.log(`[API /api/jobs] After stacks filter [${stacks.join(',')}]: ${allJobs.length} jobs`);
     }
 
     if (region) {
@@ -140,14 +157,12 @@ export async function GET(request) {
           job.region?.toLowerCase() === region.toLowerCase() ||
           matchesLocationQuery(job.location || '', job.title || '', job.description || '', region)
       );
-      console.log(`[API /api/jobs] After region filter "${region}": ${allJobs.length} jobs`);
     }
 
     if (type) {
       allJobs = allJobs.filter((job) =>
         (job.type || job.job_type || '').toLowerCase().includes(type.toLowerCase())
       );
-      console.log(`[API /api/jobs] After type filter "${type}": ${allJobs.length} jobs`);
     }
 
     if (search) {
@@ -159,15 +174,12 @@ export async function GET(request) {
           (job.stacks && job.stacks.some(stk => stk.toLowerCase().includes(s))) ||
           matchesLocationQuery(job.location || '', job.title || '', job.description || '', s)
       );
-      console.log(`[API /api/jobs] After search filter "${search}": ${allJobs.length} jobs`);
     }
 
     // ── Pagination ────────────────────────────────────────────
     const total = allJobs.length;
     const start = (page - 1) * limit;
     const paginated = allJobs.slice(start, start + limit);
-
-    console.log(`[API /api/jobs] Returning ${paginated.length} jobs (total: ${total}, pages: ${Math.ceil(total / limit) || 1})`);
 
     return Response.json({
       jobs: paginated,
@@ -177,11 +189,17 @@ export async function GET(request) {
       category
     });
   } catch (err) {
-    console.error("[API /api/jobs] Error:", err);
-    return Response.json(
-      { error: "Failed to fetch jobs", details: err.message },
-      { status: 500 }
-    );
+    console.error("[API /api/jobs] Fallback handler caught error:", err);
+    // Never fail with 500 on Vercel: return graceful response with whatever cached jobs exist
+    const fallbackJobs = cachedScrapedJobs || [];
+    return Response.json({
+      jobs: fallbackJobs.slice(0, 30),
+      total: fallbackJobs.length,
+      page: 1,
+      pages: 1,
+      category,
+      warning: "Serving cached roles"
+    });
   }
 }
 

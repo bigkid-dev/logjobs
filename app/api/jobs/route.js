@@ -227,7 +227,8 @@ export async function POST(request) {
       description,
       stacks = [],
       customQuestions = [],
-      isAnonymous = false
+      isAnonymous = false,
+      ogImageUrl = ''
     } = body;
 
     if (!title || !location || !description) {
@@ -254,7 +255,8 @@ export async function POST(request) {
       description,
       stacks,
       customQuestions,
-      isAnonymous: Boolean(isAnonymous)
+      isAnonymous: Boolean(isAnonymous),
+      ogImageUrl
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

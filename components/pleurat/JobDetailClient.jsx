@@ -176,14 +176,14 @@ export default function JobDetailClient({ initialJob, jobId }) {
                       <MapPin className="w-4 h-4 text-[var(--ink-4)]" />
                       {job.location || 'Remote'}
                     </span>
-                    <span className="text-[var(--ink-4)]">•</span>
-                    <span className={`font-semibold px-2.5 py-0.5 rounded-full border ${
-                      job.is_anonymous
-                        ? 'border-slate-200 dark:border-slate-700 bg-[var(--bg-muted)] text-[var(--ink-2)]'
-                        : 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                    }`}>
-                      {job.salary || (job.is_anonymous ? 'Undisclosed Compensation' : 'Competitive Compensation')}
-                    </span>
+                    {job.salary ? (
+                      <>
+                        <span className="text-[var(--ink-4)]">•</span>
+                        <span className="font-semibold px-2.5 py-0.5 rounded-full border text-emerald-700 bg-emerald-50 border-emerald-200">
+                          {job.salary}
+                        </span>
+                      </>
+                    ) : null}
                   </div>
                 </div>
 

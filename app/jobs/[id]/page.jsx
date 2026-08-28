@@ -14,17 +14,24 @@ export async function generateMetadata({ params }) {
   }
 
   const companyName = job.is_anonymous ? 'Confidential Employer' : (job.company || 'Direct Employer');
-  const pageTitle = `${job.title} at ${companyName} — Apply on LogJobs`;
+  const pageTitle = `Hiring: ${job.title} at ${companyName} — Apply on LogJobs`;
   const cleanSnippet = (job.description || '')
     .replace(/\s+/g, ' ')
-    .slice(0, 160)
+    .slice(0, 140)
     .trim();
+  
+  const metaDetails = [
+    job.location || 'Remote',
+    job.job_type || 'Full Time',
+    job.salary ? `Compensation: ${job.salary}` : null
+  ].filter(Boolean).join(' • ');
+
   const pageDescription = cleanSnippet
-    ? `${cleanSnippet}... Apply directly on LogJobs.`
+    ? `${metaDetails}. ${cleanSnippet}... Apply directly to hiring team on LogJobs.`
     : `Apply for ${job.title} at ${companyName} in ${job.location || 'Remote'}. Verified direct employer hiring across Nigeria and Global Remote on LogJobs.`;
 
   const canonicalUrl = `${SITE_URL}/jobs/${job.id}`;
-  const ogImage = job.logo_url || job.logo || `${SITE_URL}/logo.png`;
+  const ogImageUrl = `${SITE_URL}/jobs/${job.id}/opengraph-image`;
 
   return {
     title: pageTitle,
@@ -39,10 +46,11 @@ export async function generateMetadata({ params }) {
       siteName: 'LogJobs',
       images: [
         {
-          url: ogImage,
-          width: 512,
-          height: 512,
-          alt: `${job.title} at ${companyName}`
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          type: 'image/png',
+          alt: `${job.title} at ${companyName} on LogJobs`
         }
       ],
       locale: 'en_NG',
@@ -52,7 +60,7 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title: pageTitle,
       description: pageDescription,
-      images: [ogImage],
+      images: [ogImageUrl],
       creator: '@LogJobsBlog'
     }
   };

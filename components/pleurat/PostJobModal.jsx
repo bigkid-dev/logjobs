@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Check, ExternalLink, ArrowRight, ArrowLeft, Trash2, Lock, ShieldCheck, EyeOff } from 'lucide-react';
+import { X, Check, ExternalLink, ArrowRight, ArrowLeft, Trash2, Lock, ShieldCheck, EyeOff, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { CORPORATE_IMAGES, DEFAULT_CORP_IMAGE } from '../../lib/corporateImages.js';
 
 const COMMON_CATEGORIES = [
   'Marketing', 'Sales', 'Finance', 'Accounting', 'UI/UX Design',
@@ -36,6 +37,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
   const [description, setDescription] = useState('');
   const [selectedStacks, setSelectedStacks] = useState(['Marketing']);
   const [customStackInput, setCustomStackInput] = useState('');
+  const [selectedImage, setSelectedImage] = useState(DEFAULT_CORP_IMAGE);
   
   // Custom Screening Questions
   const [customQuestions, setCustomQuestions] = useState([
@@ -84,9 +86,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
       ? `${salaryCurrency}${Number(salaryMin).toLocaleString()} – ${salaryCurrency}${Number(salaryMax).toLocaleString()}`
       : salaryMin
       ? `From ${salaryCurrency}${Number(salaryMin).toLocaleString()}`
-      : isAnonymous
-      ? 'Competitive / Undisclosed'
-      : 'Competitive / Negotiable';
+      : '';
 
     try {
       const res = await fetch('/api/jobs', {
@@ -106,7 +106,8 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
           description,
           stacks: selectedStacks,
           customQuestions,
-          isAnonymous
+          isAnonymous,
+          ogImageUrl: selectedImage
         })
       });
 
@@ -375,8 +376,8 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                 {/* Salary */}
                 <div>
                   <label className="block text-xs font-semibold text-[var(--ink-2)] mb-1 flex items-center justify-between">
-                    <span>{isAnonymous ? 'Compensation (Optional — defaults to Undisclosed)' : 'Compensation (Annual / Monthly)'}</span>
-                    {isAnonymous && <span className="text-[10px] text-emerald-600 font-semibold">Hidden if left blank</span>}
+                    <span>Compensation (Optional)</span>
+                    <span className="text-[10px] text-[var(--ink-4)]">Leave blank if unstated</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <select
@@ -391,7 +392,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                     </select>
                     <input
                       type="number"
-                      placeholder={isAnonymous ? "Min (optional)" : "Min (e.g. 250000)"}
+                      placeholder="Min (optional, e.g. 250000)"
                       value={salaryMin}
                       onChange={(e) => setSalaryMin(e.target.value)}
                       className="flex-1 bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--ink)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] outline-none"
@@ -399,7 +400,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                     <span className="text-xs text-[var(--ink-3)] font-medium">to</span>
                     <input
                       type="number"
-                      placeholder={isAnonymous ? "Max (optional)" : "Max (e.g. 500000)"}
+                      placeholder="Max (optional, e.g. 500000)"
                       value={salaryMax}
                       onChange={(e) => setSalaryMax(e.target.value)}
                       className="flex-1 bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--ink)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] outline-none"
@@ -409,9 +410,9 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
               </div>
             )}
 
-            {/* Step 2: Category, Skills & Description */}
+            {/* Step 2: Category, Skills, Description & WhatsApp Image Card */}
             {step === 2 && (
-              <div className="space-y-4 text-xs">
+              <div className="space-y-5 text-xs">
                 <div>
                   <label className="block text-xs font-semibold text-[var(--ink-2)] mb-2">
                     Category & Key Skills
@@ -458,12 +459,104 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                   </label>
                   <textarea
                     required
-                    rows={8}
+                    rows={6}
                     placeholder="Detail the role responsibilities, required qualifications, experience, team structure, and perks..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl p-3.5 text-sm text-[var(--ink)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] outline-none leading-relaxed"
                   />
+                </div>
+
+                {/* OpenGraph & WhatsApp Share Image Selector */}
+                <div className="p-4 rounded-2xl border border-[var(--line)] bg-[var(--bg-muted)] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-[var(--primary)]" />
+                      <span className="text-xs font-bold text-[var(--ink)]">
+                        WhatsApp & Social Share Preview Card
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-[var(--ink-3)] font-medium">
+                      Select corporate background image
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-[var(--ink-3)] leading-relaxed">
+                    When your job link is shared on WhatsApp, Facebook, or Twitter, this corporate image will appear in high-res with a white overlay card summarizing your job details. (This image will not clutter your job page).
+                  </p>
+
+                  {/* Horizontal Scrollable / Grid of Corporate Photo Thumbnails */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto pr-1">
+                    {CORPORATE_IMAGES.map((img) => {
+                      const isSelected = selectedImage === img.url;
+                      return (
+                        <div
+                          key={img.id}
+                          onClick={() => setSelectedImage(img.url)}
+                          className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[16/10] group ${
+                            isSelected
+                              ? 'border-[var(--primary)] ring-2 ring-emerald-500/20 shadow-md'
+                              : 'border-[var(--line)] hover:border-slate-400 opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.label}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-1.5">
+                            <span className="text-[10px] font-semibold text-white leading-tight truncate">
+                              {img.label}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[9px] shadow-sm">
+                              ✓
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Live WhatsApp Share Preview */}
+                  <div className="pt-2 border-t border-[var(--line)] space-y-1.5">
+                    <span className="text-[10px] font-bold text-[var(--ink-3)] uppercase tracking-wider block">
+                      Live WhatsApp Card Preview
+                    </span>
+                    <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-900 aspect-[16/9] max-h-48 flex items-center justify-center p-3">
+                      {/* Selected Image in background */}
+                      <img
+                        src={selectedImage}
+                        alt="Background Preview"
+                        className="absolute inset-0 w-full h-full object-cover opacity-60"
+                      />
+                      <div className="absolute inset-0 bg-slate-950/40" />
+
+                      {/* White Overlay Card */}
+                      <div className="relative w-full max-w-sm bg-white/95 rounded-xl p-3 shadow-lg border border-white/60 space-y-1.5 text-slate-900">
+                        <div className="flex items-center justify-between text-[9px]">
+                          <span className="font-extrabold bg-[#045447] text-white px-2 py-0.5 rounded-full">
+                            LOGJOBS
+                          </span>
+                          <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            DIRECT HIRING
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-slate-900 truncate">
+                          {title || 'Job Title (e.g. Marketing Manager)'}
+                        </div>
+                        <div className="text-[10px] text-slate-600 truncate">
+                          {isAnonymous ? 'Confidential Employer' : (company || 'Hiring Company')} • 📍 {location} • {workplaceType}
+                        </div>
+                        {salaryMin && (
+                          <div className="text-[10px] font-bold text-[#045447]">
+                            💰 {salaryCurrency}{Number(salaryMin).toLocaleString()} {salaryMax ? `– ${salaryCurrency}${Number(salaryMax).toLocaleString()}` : '+'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

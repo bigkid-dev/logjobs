@@ -125,15 +125,11 @@ export default function JobCard({ job, onApply, onCopyLink }) {
             {job.job_type || job.type || 'Full Time'}
           </span>
 
-          {job.salary && (
-            <span className={`px-2.5 py-0.5 rounded-full border font-semibold ${
-              isAnonymous
-                ? 'border-slate-200 dark:border-slate-700 bg-[var(--bg-muted)] text-[var(--ink-2)]'
-                : 'border-emerald-200/80 bg-emerald-50 text-emerald-700'
-            }`}>
+          {job.salary ? (
+            <span className="px-2.5 py-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 text-emerald-700 font-semibold">
               {job.salary}
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Stack Tags */}

@@ -68,7 +68,7 @@ export default function HeaderNav({
                   : 'text-[var(--ink-2)] hover:text-[var(--ink)]'
               }`}
             >
-              <span>🌍</span>
+              <span></span>
               <span>Global Remote</span>
             </button>
             <button
@@ -79,7 +79,7 @@ export default function HeaderNav({
                   : 'text-[var(--ink-2)] hover:text-[var(--ink)]'
               }`}
             >
-              <span>💼</span>
+              <span></span>
               <span>Workspace</span>
               {user && (
                 <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700">

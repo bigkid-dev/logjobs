@@ -15,7 +15,7 @@ const CATEGORIES = [
   'Administrative'
 ];
 
-const REGIONS = ['Lagos', 'Ogun', 'Ibadan (Oyo)', 'Abuja', 'All Nigeria', 'Remote', 'Europe', 'America'];
+const REGIONS = ['Lagos', 'Abuja (FCT)', 'Port Harcourt', 'Ibadan', 'Ogun', 'All Nigeria', 'Global Remote', 'Europe', 'America'];
 const TYPES = ['Full Time', 'Contract', 'Part Time', 'Freelance', 'Internship'];
 
 export default function FilterBar({ filters, onChange }) {
@@ -52,7 +52,7 @@ export default function FilterBar({ filters, onChange }) {
         </div>
         <input
           type="text"
-          placeholder="Search by role, company, skills, or city (e.g. Accountant, Marketing, Ogun, Lagos, Ibadan, Remote)..."
+          placeholder="Search by role, company, skills, or city (e.g. Marketing, Accountant, Lagos, Abuja, Port Harcourt, Remote)..."
           value={filters.search || ''}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           className="w-full bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl pl-10 pr-10 py-3 text-sm text-[var(--ink)] placeholder:text-[var(--ink-4)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] focus:ring-4 focus:ring-emerald-100 outline-none transition-all"

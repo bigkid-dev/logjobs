@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Check, ExternalLink, ArrowRight, ArrowLeft, Trash2 } from 'lucide-react';
+import { X, Check, ExternalLink, ArrowRight, ArrowLeft, Trash2, Lock, ShieldCheck, EyeOff } from 'lucide-react';
 
 const COMMON_CATEGORIES = [
   'Marketing', 'Sales', 'Finance', 'Accounting', 'UI/UX Design',
@@ -22,6 +22,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
   const [copied, setCopied] = useState(false);
 
   // Form State
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState(user?.company_name || '');
   const [logoUrl, setLogoUrl] = useState('');
@@ -83,6 +84,8 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
       ? `${salaryCurrency}${Number(salaryMin).toLocaleString()} – ${salaryCurrency}${Number(salaryMax).toLocaleString()}`
       : salaryMin
       ? `From ${salaryCurrency}${Number(salaryMin).toLocaleString()}`
+      : isAnonymous
+      ? 'Competitive / Undisclosed'
       : 'Competitive / Negotiable';
 
     try {
@@ -91,8 +94,10 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          company: company || user?.company_name || 'Hiring Company',
-          logoUrl,
+          company: isAnonymous
+            ? (company.trim() || 'Confidential Employer')
+            : (company.trim() || user?.company_name || 'Hiring Company'),
+          logoUrl: isAnonymous ? '' : logoUrl,
           location,
           region,
           workplaceType,
@@ -100,7 +105,8 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
           salary: salaryFormatted,
           description,
           stacks: selectedStacks,
-          customQuestions
+          customQuestions,
+          isAnonymous
         })
       });
 
@@ -157,11 +163,26 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
               <Check className="w-8 h-8" />
             </div>
             <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                {isAnonymous ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Published in Stealth / Anonymous Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Role Published with Organization Branding</span>
+                  </>
+                )}
+              </div>
               <h3 className="text-2xl font-bold text-[var(--ink)] tracking-tight">
                 Role Successfully Published!
               </h3>
               <p className="text-sm text-[var(--ink-2)] max-w-md mx-auto leading-relaxed">
-                Candidates can now browse the listing, submit their CVs, and answer your screening questions directly.
+                {isAnonymous
+                  ? 'Candidates will see your role requirements and skills while your organization name and compensation remain confidential.'
+                  : 'Candidates can now browse the listing, submit their CVs, and answer your screening questions directly.'}
               </p>
             </div>
 
@@ -216,6 +237,55 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
             {/* Step 1: Basics & Location */}
             {step === 1 && (
               <div className="space-y-4 text-xs">
+                {/* Stealth / Anonymous Mode Toggle Banner */}
+                <div
+                  onClick={() => setIsAnonymous(!isAnonymous)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${
+                    isAnonymous
+                      ? 'bg-slate-900 text-white border-slate-700 shadow-md ring-2 ring-emerald-500/20'
+                      : 'bg-emerald-50/50 border-emerald-100 text-[var(--ink)] hover:border-emerald-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isAnonymous ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {isAnonymous ? <Lock className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold ${isAnonymous ? 'text-white' : 'text-[var(--ink)]'}`}>
+                            Post Anonymously (Stealth Mode)
+                          </span>
+                          {isAnonymous && (
+                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-[11px] mt-0.5 leading-tight ${isAnonymous ? 'text-slate-300' : 'text-[var(--ink-3)]'}`}>
+                          {isAnonymous
+                            ? 'Company branding and salary will be hidden from applicants. Only role requirements will be visible.'
+                            : 'Hide organization name and salary to focus strictly on candidate qualifications & requirements.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        isAnonymous ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          isAnonymous ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-[var(--ink-2)] mb-1">
                     Job Title *
@@ -232,13 +302,14 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-[var(--ink-2)] mb-1">
-                      Company / Organization Name *
+                    <label className="block text-xs font-semibold text-[var(--ink-2)] mb-1 flex items-center justify-between">
+                      <span>{isAnonymous ? 'Stealth Alias / Industry Descriptor' : 'Company / Organization Name *'}</span>
+                      {isAnonymous && <span className="text-[10px] text-[var(--ink-4)] font-normal">Optional</span>}
                     </label>
                     <input
                       type="text"
-                      required
-                      placeholder="e.g. Paystack, Kuda, Zenith, or Stealth"
+                      required={!isAnonymous}
+                      placeholder={isAnonymous ? "e.g. Stealth Startup, Confidential Client (Default: Confidential Employer)" : "e.g. Paystack, Kuda, Zenith"}
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
                       className="w-full bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl px-4 py-2.5 text-sm text-[var(--ink)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] outline-none"
@@ -303,8 +374,9 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
 
                 {/* Salary */}
                 <div>
-                  <label className="block text-xs font-semibold text-[var(--ink-2)] mb-1">
-                    Compensation (Annual / Monthly)
+                  <label className="block text-xs font-semibold text-[var(--ink-2)] mb-1 flex items-center justify-between">
+                    <span>{isAnonymous ? 'Compensation (Optional — defaults to Undisclosed)' : 'Compensation (Annual / Monthly)'}</span>
+                    {isAnonymous && <span className="text-[10px] text-emerald-600 font-semibold">Hidden if left blank</span>}
                   </label>
                   <div className="flex items-center gap-2">
                     <select
@@ -319,7 +391,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                     </select>
                     <input
                       type="number"
-                      placeholder="Min (e.g. 250000)"
+                      placeholder={isAnonymous ? "Min (optional)" : "Min (e.g. 250000)"}
                       value={salaryMin}
                       onChange={(e) => setSalaryMin(e.target.value)}
                       className="flex-1 bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--ink)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] outline-none"
@@ -327,7 +399,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                     <span className="text-xs text-[var(--ink-3)] font-medium">to</span>
                     <input
                       type="number"
-                      placeholder="Max (e.g. 500000)"
+                      placeholder={isAnonymous ? "Max (optional)" : "Max (e.g. 500000)"}
                       value={salaryMax}
                       onChange={(e) => setSalaryMax(e.target.value)}
                       className="flex-1 bg-[var(--bg-muted)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--ink)] focus:bg-[var(--bg-surface)] focus:border-[var(--primary)] outline-none"
@@ -475,12 +547,18 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
                 <button
                   type="button"
                   onClick={() => {
-                    if (step === 1 && (!title || !location)) {
-                      setError('Job title and Location are required');
-                      return;
+                    if (step === 1) {
+                      if (!title || !location) {
+                        setError('Job title and Location are required');
+                        return;
+                      }
+                      if (!isAnonymous && !company) {
+                        setError('Company / Organization Name is required for branded roles (or switch to Stealth Mode)');
+                        return;
+                      }
                     }
                     if (step === 2 && !description) {
-                      setError('Job description is required');
+                      setError('Job description and requirements are required');
                       return;
                     }
                     setError(null);

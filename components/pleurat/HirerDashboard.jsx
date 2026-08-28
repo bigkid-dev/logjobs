@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Copy, Check, Users, Eye, Briefcase, ExternalLink, FileText, Globe, CheckCircle2 } from 'lucide-react';
+import { Plus, Copy, Check, Users, Eye, Briefcase, ExternalLink, FileText, Globe, CheckCircle2, Lock } from 'lucide-react';
 
 export default function HirerDashboard({ user, onOpenPostJob }) {
   const [jobs, setJobs] = useState([]);
@@ -187,6 +187,7 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
             {jobs.map((job) => {
               const isSelected = selectedJob?.id === job.id;
               const isCopied = copiedId === job.id;
+              const isAnon = Boolean(job.is_anonymous);
 
               return (
                 <div
@@ -200,8 +201,19 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <h3 className="text-sm font-bold text-[var(--ink)] leading-snug">{job.title}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm font-bold text-[var(--ink)] leading-snug">{job.title}</h3>
+                        {isAnon && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-slate-900 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded-full">
+                            <Lock className="w-2.5 h-2.5 text-emerald-400" />
+                            <span>Stealth</span>
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-[var(--ink-3)] mt-1 font-medium">
+                        {isAnon ? (
+                          <span className="italic text-slate-500 mr-1.5">[Stealth]</span>
+                        ) : null}
                         {job.location} • {job.job_type || 'Full Time'}
                       </div>
                     </div>
@@ -261,9 +273,17 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
               <>
                 <div className="flex items-center justify-between pb-4 border-b border-[var(--line)]">
                   <div>
-                    <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider block">
-                      Applicant Submissions
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider block">
+                        Applicant Submissions
+                      </span>
+                      {selectedJob.is_anonymous && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-slate-900 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded-full">
+                          <Lock className="w-2.5 h-2.5 text-emerald-400" />
+                          <span>Stealth Mode</span>
+                        </span>
+                      )}
+                    </div>
                     <h2 className="text-lg font-bold text-[var(--ink)] mt-0.5">
                       {selectedJob.title}
                     </h2>

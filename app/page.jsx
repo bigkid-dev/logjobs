@@ -235,8 +235,8 @@ export default function Home() {
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--ink)] mt-2">
                     {activeTab === 'nigerian'
-                      ? 'Ogun, Lagos, Abuja & Nigeria Career Opportunities'
-                      : 'Global Remote Career Opportunities'}
+                      ? 'Direct Career Opportunities Across Nigeria'
+                      : 'Global Remote & Worldwide Career Opportunities'}
                   </h2>
                 </div>
 

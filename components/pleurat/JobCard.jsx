@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, Building2, Clock, Share2, Check, ArrowRight, ExternalLink, ShieldCheck } from 'lucide-react';
+import { MapPin, Building2, Clock, Share2, Check, ArrowRight, ExternalLink, ShieldCheck, Lock } from 'lucide-react';
 
 export default function JobCard({ job, onApply, onCopyLink }) {
   const [copied, setCopied] = useState(false);
@@ -41,15 +41,22 @@ export default function JobCard({ job, onApply, onCopyLink }) {
     : 'DJ';
 
   const isCustomJob = Boolean(job.hirer_id);
+  const isAnonymous = Boolean(job.is_anonymous);
 
   return (
-    <div className="group relative rounded-2xl border border-[var(--line)] bg-[var(--bg-surface)] p-6 transition-all duration-200 hover:border-emerald-400 hover:shadow-md hover:-translate-y-1 flex flex-col justify-between shadow-sm">
+    <div className={`group relative rounded-2xl border bg-[var(--bg-surface)] p-6 transition-all duration-200 hover:border-emerald-400 hover:shadow-md hover:-translate-y-1 flex flex-col justify-between shadow-sm ${
+      isAnonymous ? 'border-slate-300/80 dark:border-slate-800' : 'border-[var(--line)]'
+    }`}>
       {/* Top Details */}
       <div>
         <div className="flex items-start gap-3.5 mb-4">
-          {/* Logo / Initials */}
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold text-[var(--primary)] overflow-hidden">
-            {job.logo_url || job.logo ? (
+          {/* Logo / Stealth Icon / Initials */}
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold overflow-hidden">
+            {isAnonymous ? (
+              <div className="w-full h-full rounded-xl bg-slate-900 text-emerald-400 border border-slate-700 flex items-center justify-center shadow-inner">
+                <Lock className="w-4 h-4" />
+              </div>
+            ) : job.logo_url || job.logo ? (
               <img
                 src={job.logo_url || job.logo}
                 alt={job.company}
@@ -59,7 +66,7 @@ export default function JobCard({ job, onApply, onCopyLink }) {
                 }}
               />
             ) : (
-              <div className="w-full h-full rounded-xl bg-[var(--bg-muted)] border border-[var(--line)] flex items-center justify-center">
+              <div className="w-full h-full rounded-xl bg-[var(--bg-muted)] border border-[var(--line)] flex items-center justify-center text-[var(--primary)]">
                 <span>{initials}</span>
               </div>
             )}
@@ -71,7 +78,12 @@ export default function JobCard({ job, onApply, onCopyLink }) {
               <h3 className="text-base font-bold text-[var(--ink)] tracking-tight leading-snug group-hover:text-[var(--primary)] transition-colors">
                 {job.title}
               </h3>
-              {isCustomJob || job.source === 'Direct Employer' ? (
+              {isAnonymous ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-slate-900 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded-full shadow-sm">
+                  <Lock className="w-2.5 h-2.5 text-emerald-400" />
+                  <span>Confidential</span>
+                </span>
+              ) : isCustomJob || job.source === 'Direct Employer' ? (
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   <span>Direct Hiring</span>
@@ -83,7 +95,9 @@ export default function JobCard({ job, onApply, onCopyLink }) {
               ) : null}
             </div>
             <div className="text-xs text-[var(--ink-2)] mt-1 flex items-center gap-2 font-medium">
-              <span>{job.company}</span>
+              <span className={isAnonymous ? 'italic text-[var(--ink-2)] font-semibold' : ''}>
+                {job.company || (isAnonymous ? 'Confidential Employer' : 'Direct Employer')}
+              </span>
               <span className="text-[var(--ink-4)]">•</span>
               <span className="text-[var(--ink-3)] flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-[var(--ink-4)]" />
@@ -112,7 +126,11 @@ export default function JobCard({ job, onApply, onCopyLink }) {
           </span>
 
           {job.salary && (
-            <span className="px-2.5 py-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 text-emerald-700 font-semibold">
+            <span className={`px-2.5 py-0.5 rounded-full border font-semibold ${
+              isAnonymous
+                ? 'border-slate-200 dark:border-slate-700 bg-[var(--bg-muted)] text-[var(--ink-2)]'
+                : 'border-emerald-200/80 bg-emerald-50 text-emerald-700'
+            }`}>
               {job.salary}
             </span>
           )}

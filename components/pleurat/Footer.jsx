@@ -64,19 +64,19 @@ export default function Footer({ onOpenAuth }) {
           <div className="space-y-3">
             <span className="text-[var(--ink)] font-bold block text-sm">Locations</span>
             <div className="space-y-2 text-[var(--ink-3)]">
-              <div><a href="/" className="hover:text-[var(--primary)]">Lagos & Nigeria</a></div>
+              <div><a href="/" className="hover:text-[var(--primary)]">Lagos & Ogun</a></div>
               <div><a href="/" className="hover:text-[var(--primary)]">Abuja & Port Harcourt</a></div>
-              <div><a href="/" className="hover:text-[var(--primary)]">Global Remote</a></div>
-              <div><a href="/" className="hover:text-[var(--primary)]">Africa Regional</a></div>
+              <div><a href="/" className="hover:text-[var(--primary)]">Ibadan & Nationwide Hubs</a></div>
+              <div><a href="/" className="hover:text-[var(--primary)]">Global Remote (Worldwide)</a></div>
             </div>
           </div>
 
           <div className="space-y-3">
             <span className="text-[var(--ink)] font-bold block text-sm">Platform</span>
             <div className="space-y-2 text-[var(--ink-3)]">
-              <div>Verified Companies</div>
+              <div>Verified Direct Employers</div>
               <div>Direct CV Uploads</div>
-              <div>Real-time Email Notifications</div>
+              <div>Real-time Email Alerts</div>
               <div>Privacy Protection</div>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function Footer({ onOpenAuth }) {
 
         <div className="pt-8 border-t border-[var(--line)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--ink-3)]">
           <div className="flex flex-col sm:flex-row items-center gap-2">
-            <span>© {new Date().getFullYear()} LogJob.ng. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} LogJobs.blog. All rights reserved.</span>
             <span className="hidden sm:inline">•</span>
             <a
               href="https://storyset.com/job"
@@ -96,8 +96,8 @@ export default function Footer({ onOpenAuth }) {
             </a>
           </div>
           <div className="flex items-center gap-1.5 text-[var(--ink-2)] font-medium">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Verified Hiring Network</span>
+            {/* <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Verified Hiring Network</span> */}
           </div>
         </div>
       </div>

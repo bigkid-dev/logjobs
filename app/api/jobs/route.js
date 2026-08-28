@@ -217,7 +217,7 @@ export async function POST(request) {
     const body = await request.json();
     const {
       title,
-      company = user.company_name || 'Hiring Company',
+      company,
       logoUrl = '',
       location,
       region = 'Remote',
@@ -226,7 +226,8 @@ export async function POST(request) {
       salary = '',
       description,
       stacks = [],
-      customQuestions = []
+      customQuestions = [],
+      isAnonymous = false
     } = body;
 
     if (!title || !location || !description) {
@@ -236,11 +237,15 @@ export async function POST(request) {
       );
     }
 
+    const resolvedCompany = isAnonymous
+      ? (company?.trim() || 'Confidential Employer')
+      : (company?.trim() || user.company_name || 'Hiring Company');
+
     const newJob = await createJob({
       hirerId: user.id,
       title,
-      company,
-      logoUrl,
+      company: resolvedCompany,
+      logoUrl: isAnonymous ? '' : logoUrl,
       location,
       region,
       workplaceType,
@@ -248,7 +253,8 @@ export async function POST(request) {
       salary,
       description,
       stacks,
-      customQuestions
+      customQuestions,
+      isAnonymous: Boolean(isAnonymous)
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

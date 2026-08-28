@@ -35,7 +35,9 @@ export default function JobCard({ job }) {
     'America': '#F44336',
   }
 
-  const initials = job.company
+  const initials = job.is_anonymous
+    ? '🔒'
+    : job.company
     ? job.company.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     : '??'
 

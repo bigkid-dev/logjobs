@@ -1,5 +1,6 @@
 import { getDbJobs } from '../lib/db.js';
 import { SITE_URL } from '../lib/seo.js';
+import { STACK_KEYWORDS } from '../lib/normalize.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,15 @@ export default async function sitemap() {
     },
   ];
 
-  // 2. Dynamic Job Posting Routes
+  // 2. Category / Tag Landing Routes (for Google Search indexing)
+  const categoryRoutes = Object.keys(STACK_KEYWORDS).map((cat) => ({
+    url: `${baseUrl}/?stacks=${encodeURIComponent(cat)}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.85,
+  }));
+
+  // 3. Dynamic Job Posting Routes
   let jobRoutes = [];
   try {
     const jobs = await getDbJobs({ category: 'all' });
@@ -42,5 +51,5 @@ export default async function sitemap() {
     console.error('Sitemap generation error fetching jobs:', err);
   }
 
-  return [...staticRoutes, ...jobRoutes];
+  return [...staticRoutes, ...categoryRoutes, ...jobRoutes];
 }

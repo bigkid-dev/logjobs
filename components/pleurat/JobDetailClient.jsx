@@ -141,7 +141,7 @@ export default function JobDetailClient({ initialJob, jobId }) {
                     {job.is_anonymous ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-emerald-300 border border-slate-700 shadow-sm">
                         <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Confidential Hiring</span>
+                        <span>Hiring</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
@@ -228,7 +228,9 @@ export default function JobDetailClient({ initialJob, jobId }) {
                     Category & Key Skills
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {job.stacks.map((stack) => (
+                    {job.stacks
+                      .filter((stack) => stack && !stack.toLowerCase().includes('confidential'))
+                      .map((stack) => (
                       <span
                         key={stack}
                         className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold"

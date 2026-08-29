@@ -140,7 +140,10 @@ export default function JobCard({ job }) {
       {/* Stack tags */}
       {job.stacks?.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '14px' }}>
-          {[...new Set(job.stacks)].slice(0, 6).map(stack => (
+          {[...new Set(job.stacks)]
+            .filter(stack => stack && !stack.toLowerCase().includes('confidential'))
+            .slice(0, 6)
+            .map(stack => (
             <span key={stack} style={{
               fontSize: '11px', padding: '2px 7px', borderRadius: '4px',
               background: `${stackColors[stack] || '#8B949E'}18`,

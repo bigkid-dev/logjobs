@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import fs from 'fs';
+import path from 'path';
 import { getJobById } from '../../../lib/db.js';
 import { getMatchingCorporateImage } from '../../../lib/corporateImages.js';
 
@@ -30,6 +32,19 @@ export default async function Image({ params }) {
 
   const bgImage = getMatchingCorporateImage(job);
 
+  let imageSrc = bgImage;
+  try {
+    if (bgImage && bgImage.startsWith('/')) {
+      const localFilePath = path.join(process.cwd(), 'public', bgImage);
+      if (fs.existsSync(localFilePath)) {
+        const fileBuffer = fs.readFileSync(localFilePath);
+        imageSrc = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
+      }
+    }
+  } catch (readErr) {
+    console.warn('Local OG image read fallback:', readErr.message);
+  }
+
   return new ImageResponse(
     (
       <div
@@ -45,7 +60,7 @@ export default async function Image({ params }) {
       >
         {/* Background Corporate Image */}
         <img
-          src={bgImage}
+          src={imageSrc}
           alt={title}
           style={{
             position: 'absolute',

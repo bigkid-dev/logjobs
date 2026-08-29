@@ -10,7 +10,8 @@ import {
   matchesStack,
   extractStacks,
   detectRegion,
-  matchesLocationQuery
+  matchesLocationQuery,
+  sanitizeStacks
 } from "../../../lib/normalize.js";
 import { getDbJobs, createJob, getJobsByHirerId } from "../../../lib/db.js";
 import { getSessionUser } from "../../../lib/auth.js";
@@ -67,7 +68,7 @@ async function fetchExternalScrapedJobs() {
 
   const normalized = scrapedJobs.map((job) => ({
     ...job,
-    stacks: [...new Set([...(job.stacks || []), ...extractStacks(job.title)])],
+    stacks: sanitizeStacks([...(job.stacks || []), ...extractStacks(job.title)]),
     region: job.region || detectRegion(job.location)
   }));
 
@@ -143,8 +144,11 @@ export async function GET(request) {
       allJobs = allJobs.filter(job => job.region !== 'Nigeria');
     }
 
-    // Deduplicate
-    allJobs = deduplicateJobs(allJobs);
+    // Deduplicate and sanitize stacks
+    allJobs = deduplicateJobs(allJobs).map(job => ({
+      ...job,
+      stacks: sanitizeStacks(job.stacks)
+    }));
 
     // ── Apply Query Filters ───────────────────────────────────
     if (stacks.length) {
@@ -253,7 +257,7 @@ export async function POST(request) {
       jobType,
       salary,
       description,
-      stacks,
+      stacks: sanitizeStacks(stacks),
       customQuestions,
       isAnonymous: Boolean(isAnonymous),
       ogImageUrl

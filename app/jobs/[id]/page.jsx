@@ -1,5 +1,6 @@
 import { getJobById } from '../../../lib/db.js';
 import { generateJobPostingSchema, generateBreadcrumbSchema, SITE_URL, DEFAULT_SEO } from '../../../lib/seo.js';
+import { getAbsoluteCorporateImageUrl } from '../../../lib/corporateImages.js';
 import JobDetailClient from '../../../components/pleurat/JobDetailClient';
 
 export async function generateMetadata({ params }) {
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }) {
 
   const canonicalUrl = `${SITE_URL}/jobs/${job.id}`;
   const ogImageUrl = `${SITE_URL}/jobs/${job.id}/opengraph-image`;
+  const directImageUrl = getAbsoluteCorporateImageUrl(job);
 
   return {
     title: pageTitle,
@@ -51,6 +53,12 @@ export async function generateMetadata({ params }) {
           height: 630,
           type: 'image/png',
           alt: `${job.title} at ${companyName} on LogJobs`
+        },
+        {
+          url: directImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${job.title} on LogJobs`
         }
       ],
       locale: 'en_NG',
@@ -60,7 +68,7 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title: pageTitle,
       description: pageDescription,
-      images: [ogImageUrl],
+      images: [ogImageUrl, directImageUrl],
       creator: '@LogJobsBlog'
     }
   };

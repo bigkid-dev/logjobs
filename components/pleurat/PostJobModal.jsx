@@ -41,8 +41,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
   
   // Custom Screening Questions
   const [customQuestions, setCustomQuestions] = useState([
-    { id: 1, question: 'Link to your LinkedIn profile, portfolio, or past work references', required: true },
-    { id: 2, question: 'How many years of relevant experience do you have for this role?', required: true }
+    { id: 1, question: 'How many years of relevant experience do you have for this role?', required: true }
   ]);
   const [newQuestionText, setNewQuestionText] = useState('');
 
@@ -57,8 +56,9 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
   };
 
   const addCustomStack = () => {
-    if (customStackInput.trim() && !selectedStacks.includes(customStackInput.trim())) {
-      setSelectedStacks([...selectedStacks, customStackInput.trim()]);
+    const trimmed = customStackInput.trim();
+    if (trimmed && !trimmed.toLowerCase().includes('confidential') && !selectedStacks.includes(trimmed)) {
+      setSelectedStacks([...selectedStacks, trimmed]);
       setCustomStackInput('');
     }
   };
@@ -104,7 +104,7 @@ export default function PostJobModal({ isOpen, onClose, onJobCreated, user }) {
           jobType,
           salary: salaryFormatted,
           description,
-          stacks: selectedStacks,
+          stacks: selectedStacks.filter(s => s && !s.toLowerCase().includes('confidential')),
           customQuestions,
           isAnonymous,
           ogImageUrl: selectedImage

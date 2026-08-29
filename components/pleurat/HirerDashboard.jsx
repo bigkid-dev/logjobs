@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { Plus, Copy, Check, Users, Eye, Briefcase, ExternalLink, FileText, Globe, CheckCircle2, Lock } from 'lucide-react';
+import { Plus, Copy, Check, Users, Eye, Briefcase, ExternalLink, FileText, Globe, CheckCircle2, Lock, Trash2, AlertTriangle, X } from 'lucide-react';
 
 export default function HirerDashboard({ user, onOpenPostJob }) {
   const [jobs, setJobs] = useState([]);
@@ -10,6 +8,8 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
   const [applications, setApplications] = useState([]);
   const [loadingApps, setLoadingApps] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [jobToDelete, setJobToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchMyJobs();
@@ -89,12 +89,42 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
   };
 
   const handleCopyLink = (jobId) => {
-    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://logjob.ng';
+    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://logjobs.blog';
     const link = `${appUrl}/jobs/${jobId}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link);
       setCopiedId(jobId);
       setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        const remainingJobs = jobs.filter(j => j.id !== jobId);
+        setJobs(remainingJobs);
+        if (selectedJob?.id === jobId) {
+          if (remainingJobs.length > 0) {
+            setSelectedJob(remainingJobs[0]);
+            fetchApplications(remainingJobs[0].id);
+          } else {
+            setSelectedJob(null);
+            setApplications([]);
+          }
+        }
+        setJobToDelete(null);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete job');
+      }
+    } catch (err) {
+      console.error('Delete job error:', err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -260,6 +290,14 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
                       >
                         {job.status === 'active' ? 'Pause' : 'Resume'}
                       </button>
+
+                      <button
+                        onClick={() => setJobToDelete(job)}
+                        className="p-1 rounded-lg text-xs text-[var(--ink-4)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                        title="Delete job listing"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -290,6 +328,14 @@ export default function HirerDashboard({ user, onOpenPostJob }) {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setJobToDelete(selectedJob)}
+                      className="p-2 rounded-xl border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                      title="Delete this role"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+
                     <a
                       href={`/jobs/${selectedJob.id}`}
                       target="_blank"

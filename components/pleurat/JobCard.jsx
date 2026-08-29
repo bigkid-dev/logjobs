@@ -135,7 +135,10 @@ export default function JobCard({ job, onApply, onCopyLink }) {
         {/* Stack Tags */}
         {job.stacks && job.stacks.length > 0 && (
           <div className="flex items-center flex-wrap gap-1.5 mb-5">
-            {[...new Set(job.stacks)].slice(0, 5).map((stack) => (
+            {[...new Set(job.stacks)]
+              .filter((stack) => stack && !stack.toLowerCase().includes('confidential'))
+              .slice(0, 5)
+              .map((stack) => (
               <span
                 key={stack}
                 className="text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-[var(--bg-muted)] border border-[var(--line)] text-[var(--ink-2)]"
